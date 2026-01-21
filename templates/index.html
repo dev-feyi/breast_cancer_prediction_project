@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OncoPredict | Clinical Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --accent: #f43f5e;
+            --bg-light: #f8fafc;
+            --text-main: #1e293b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .dashboard {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styling */
+        .top-bar {
+            background: white;
+            padding: 30px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .top-bar h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .top-bar p { color: #64748b; font-size: 14px; margin-top: 5px; }
+
+        /* Content Layout */
+        .main-content { padding: 40px; }
+
+        .alert-box {
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .alert-box span { font-size: 20px; }
+        .alert-box p { font-size: 13px; color: #9f1239; }
+
+        /* Form Grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .input-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .input-card h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 8px;
+        }
+
+        .field-group { margin-bottom: 12px; }
+        
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Buttons */
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-main { background: var(--primary); color: white; width: 100%; max-width: 400px; font-size: 16px; margin: 20px auto; display: block;}
+        .btn-sub { background: white; border: 1.5px solid var(--border-color); color: var(--text-main); font-size: 13px; }
+        .btn:hover { opacity: 0.9; }
+
+        /* Results Display */
+        #outputArea {
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .result-benign { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+        .result-malignant { background: #fef2f2; border: 1px solid #fecdd3; color: #991b1b; }
+
+        .score-display { font-size: 42px; font-weight: 800; margin: 10px 0; }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #cbd5e1;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <header class="top-bar">
+        <h1>OncoPredict AI</h1>
+        <p>Breast Cancer Diagnostics Support System</p>
+    </header>
+
+    <main class="main-content">
+        <div class="alert-box">
+            <span>⚕️</span>
+            <p><strong>Clinical Disclaimer:</strong> This interface is a computational prototype. All results must be verified by a certified oncologist. Do not use for self-diagnosis.</p>
+        </div>
+
+        <form id="diagnosticForm">
+            <div class="category-grid">
+                <div class="input-card">
+                    <h3>Spatial Means</h3>
+                    <div id="group-mean"></div>
+                </div>
+
+                <div class="input-card">
+                    <h3>Standard Errors</h3>
+                    <div id="group-se"></div>
+                </div>
+
+                <div class="input-card">
+                    <h3>Worst Case Values</h3>
+                    <div id="group-worst"></div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-sub" onclick="importSample('benign')">Load Benign Sample</button>
+                <button type="button" class="btn btn-sub" onclick="importSample('malignant')">Load Malignant Sample</button>
+                <button type="button" class="btn btn-sub" onclick="resetUI()">Reset</button>
+            </div>
+
+            <button type="submit" class="btn btn-main">Run Diagnostic Analysis</button>
+        </form>
+
+        <div class="loader" id="uiLoader">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; font-size: 14px;">Processing cell telemetry...</p>
+        </div>
+
+        <div id="outputArea">
+            <h2 id="diagLabel">RESULT</h2>
+            <div class="score-display" id="diagScore">0%</div>
+            <p id="diagMsg"></p>
+        </div>
+    </main>
+</div>
+
+<script>
+    const SCHEMA = {
+        mean: ['mean radius', 'mean texture', 'mean perimeter', 'mean area', 'mean smoothness', 'mean compactness', 'mean concavity', 'mean concave points', 'mean symmetry', 'mean fractal dimension'],
+        se: ['radius error', 'texture error', 'perimeter error', 'area error', 'smoothness error', 'compactness error', 'concavity error', 'concave points error', 'symmetry error', 'fractal dimension error'],
+        worst: ['worst radius', 'worst texture', 'worst perimeter', 'worst area', 'worst smoothness', 'worst compactness', 'worst concavity', 'worst concave points', 'worst symmetry', 'worst fractal dimension']
+    };
+
+    // Initialize UI inputs
+    const buildInterface = () => {
+        Object.entries(SCHEMA).forEach(([key, fields]) => {
+            const container = document.getElementById(`group-${key}`);
+            fields.forEach(field => {
+                const div = document.createElement('div');
+                div.className = 'field-group';
+                const slug = field.replace(/\s+/g, '_');
+                div.innerHTML = `
+                    <label for="${slug}">${field}</label>
+                    <input type="number" id="${slug}" name="${field}" step="0.00001" required>
+                `;
+                container.appendChild(div);
+            });
+        });
+    };
+
+    const importSample = async (variant) => {
+        try {
+            const res = await fetch('/sample-data');
+            const json = await res.json();
+            if (!json.success) return;
+
+            const data = variant === 'benign' ? json.benign_sample : json.malignant_sample;
+            Object.entries(data).forEach(([key, val]) => {
+                const el = document.getElementById(key.replace(/\s+/g, '_'));
+                if (el) el.value = val.toFixed(5);
+            });
+        } catch (err) {
+            console.error("Sampling error:", err);
+        }
+    };
+
+    const resetUI = () => {
+        document.getElementById('diagnosticForm').reset();
+        document.getElementById('outputArea').style.display = 'none';
+    };
+
+    document.getElementById('diagnosticForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const loader = document.getElementById('uiLoader');
+        const output = document.getElementById('outputArea');
+        
+        loader.style.display = 'block';
+        output.style.display = 'none';
+
+        const payload = {};
+        new FormData(e.target).forEach((val, key) => payload[key] = parseFloat(val));
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            loader.style.display = 'none';
+
+            if (result.success) {
+                output.className = result.is_benign ? 'result-benign' : 'result-malignant';
+                document.getElementById('diagLabel').textContent = result.diagnosis.toUpperCase();
+                document.getElementById('diagScore').textContent = `${result.confidence}%`;
+                document.getElementById('diagMsg').textContent = result.message;
+                output.style.display = 'block';
+            } else {
+                alert("Analysis failed: " + result.error);
+            }
+        } catch (error) {
+            loader.style.display = 'none';
+            alert("Connection error to diagnostic server.");
+        }
+    };
+
+    buildInterface();
+</script>
+</body>
+</html>
